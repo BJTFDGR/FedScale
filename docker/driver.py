@@ -1,14 +1,13 @@
 # Submit job to the remote cluster
 
-import datetime
-import os
-import pickle
-import random
-import subprocess
+import yaml
 import sys
 import time
-
-import yaml
+import random
+import os
+import subprocess
+import pickle
+import datetime
 
 
 def flatten(d):
@@ -75,19 +74,24 @@ def process_cmd(yaml_file, local=False):
         if conf_name == "log_path":
             log_path = os.path.join(
                 job_conf[conf_name], 'log', job_name, time_stamp)
-
+    # 
+    # $FEDSCALE_HOME =: ~/localscratch2/chenboc1/FedScale
     total_gpu_processes = sum([sum(x) for x in total_gpus])
     # =========== Submit job to parameter server ============
     running_vms.add(ps_ip)
     ps_cmd = f" python {yaml_conf['exp_path']}/{yaml_conf['aggregator_entry']} {conf_script} --this_rank=0 --num_executors={total_gpu_processes} --executor_configs={executor_configs} "
-
+    # ps_cmd = f" python fedscale/core/aggregation/aggregator.py  --time_stamp=0707_180616 --ps_ip=127.0.1.1 --job_name=femnist --log_path=$FEDSCALE_HOME/benchmark --num_participants=100 --data_set=femnist --data_dir=$FEDSCALE_HOME/benchmark/dataset/data/femnist --data_map_file=$FEDSCALE_HOME/benchmark/dataset/data/femnist/client_data_mapping/train.csv --device_conf_file=$FEDSCALE_HOME/benchmark/dataset/data/device_info/client_device_capacity --device_avail_file=$FEDSCALE_HOME/benchmark/dataset/data/device_info/client_behave_trace --model=shufflenet_v2_x2_0 --gradient_policy=yogi --eval_interval=30 --rounds=1000 --filter_less=21 --num_loaders=2 --yogi_eta=3e-3 --yogi_tau=1e-8 --local_steps=20 --learning_rate=0.05 --batch_size=20 --test_bsz=20 --malicious_factor=4 --use_cuda=True --this_rank=0 --num_executors=20 --executor_configs=127.0.1.1:[0,4,4,4,4,4]"
     with open(f"{job_name}_logging", 'wb') as fout:
         pass
-
+    # shell=True,
     print(f"Starting aggregator on {ps_ip}...")
     with open(f"{job_name}_logging", 'a') as fout:
         if local:
-            subprocess.Popen(f'{ps_cmd}', shell=True, stdout=fout, stderr=fout)
+            # subprocess.Popen(f'{ps_cmd}', shell=True,stdout=fout, stderr=fout)
+            cmd_sequence=f'{ps_cmd}'
+            cmd_sequence=cmd_sequence.split()
+            p = subprocess.Popen(cmd_sequence,stdout=fout, stderr=fout)  
+            # 'python /home/chenboc1/localscratch2/chenboc1/FedScale/fedscale/core/aggregation/aggregator.py'
         else:
             subprocess.Popen(f'ssh {submit_user}{ps_ip} "{setup_cmd} {ps_cmd}"',
                              shell=True, stdout=fout, stderr=fout)
@@ -109,6 +113,9 @@ def process_cmd(yaml_file, local=False):
                     if local:
                         subprocess.Popen(f'{worker_cmd}',
                                          shell=True, stdout=fout, stderr=fout)
+                        # cmd_sequence=f'{worker_cmd}'
+                        # cmd_sequence=cmd_sequence.split()
+                        # p = subprocess.Popen(cmd_sequence,stdout=fout, stderr=fout)                            
                     else:
                         subprocess.Popen(f'ssh {submit_user}{worker} "{setup_cmd} {worker_cmd}"',
                                          shell=True, stdout=fout, stderr=fout)
@@ -141,6 +148,8 @@ def terminate(job_name):
                              shell=True, stdout=fout, stderr=fout)
 
 print_help: bool = False
+# process_cmd('benchmark/configs/femnist/debug.yml',True)
+pass
 if len(sys.argv) > 1:
     if sys.argv[1] == 'submit' or sys.argv[1] == 'start':
         process_cmd(sys.argv[2], False if sys.argv[1] == 'submit' else True)

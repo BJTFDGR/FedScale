@@ -31,7 +31,7 @@ class Aggregator(job_api_pb2_grpc.JobServiceServicer):
         self.experiment_mode = args.experiment_mode
         self.device = args.cuda_device if args.use_cuda else torch.device(
             'cpu')
-
+        logging.info(f"Job devices {self.device}")
         # ======== env information ========
         self.this_rank = 0
         self.global_virtual_clock = 0.

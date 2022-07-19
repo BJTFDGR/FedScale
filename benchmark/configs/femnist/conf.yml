@@ -24,6 +24,7 @@ auth:
 # cmd to run before we can indeed run FAR (in order)
 setup_commands:
     - source $HOME/anaconda3/bin/activate fedscale
+    - export NCCL_SOCKET_IFNAME='enp94s0f0'  
 
 # ========== Additional job configuration ========== 
 # Default parameters are specified in config_parser.py, wherein more description of the parameter can be found
@@ -50,5 +51,5 @@ job_conf:
     - batch_size: 20 # greater than 20 will block
     - test_bsz: 20 # greater than 20 will block
     - malicious_factor: 4
-    - use_cuda: True
+    # - use_cuda: True
 
